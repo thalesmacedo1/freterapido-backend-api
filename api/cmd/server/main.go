@@ -12,24 +12,8 @@ import (
 	"github.com/thalesmacedo1/freterapido-backend-api/api/interfaces/routers"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	_ "github.com/thalesmacedo1/freterapido-backend-api/docs"
 )
 
-// @title API de Cotação de Frete
-// @version 1.0
-// @description API para consulta de valores de frete através de integrações com transportadoras.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.freterapido.com
-// @contact.email suporte@freterapido.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host localhost:3000
-// @BasePath /
 func main() {
 	// Carrega variáveis de ambiente
 	if err := godotenv.Load(); err != nil {

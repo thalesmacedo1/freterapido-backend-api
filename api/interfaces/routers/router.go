@@ -1,29 +1,36 @@
 package routers
 
 import (
+	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-
-	"github.com/gin-gonic/gin"
-	"github.com/thalesmacedo1/freterapido-backend-api/infrastructure/logger"
-	"github.com/thalesmacedo1/freterapido-backend-api/interfaces/api/handlers"
-	"github.com/thalesmacedo1/freterapido-backend-api/interfaces/middleware"
+	"github.com/thalesmacedo1/freterapido-backend-api/api/application/usecases"
+	"github.com/thalesmacedo1/freterapido-backend-api/api/interfaces/api"
 )
 
-func Router(quoteHandler *handlers.QuoteHandler, metricsHandler *handlers.MetricsHandler, logger logger.Logger) *gin.Engine {
-	router := gin.New()
+// SetupRouter configures the API routes
+func SetupRouter(
+	getShippingQuotationUseCase *usecases.GetShippingQuotationUseCase,
+	getMetricsUseCase *usecases.GetMetricsUseCase,
+) *gin.Engine {
+	router := gin.Default()
 
-	// Middleware
-	router.Use(gin.Recovery())
-	router.Use(middleware.LoggerMiddleware(logger))
+	// Create controllers
+	quoteController := api.NewQuoteController(getShippingQuotationUseCase)
+	metricsController := api.NewMetricsController(getMetricsUseCase)
 
-	// use ginSwagger middleware to serve the API docs
+	// Swagger documentation route
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	// Quote Endpoints
+	// API routes group
+	apiGroup := router.Group("/")
+	{
+		// Quote route
+		apiGroup.POST("/quote", quoteController.GetQuote)
 
-	router.GET("/quote", quoteHandler.MakeQuotation)
-	router.POST("/metrics", metricsHandler.GetMetrics)
+		// Metrics route
+		apiGroup.GET("/metrics", metricsController.GetMetrics)
+	}
 
 	return router
 }

@@ -1,0 +1,213 @@
+swagger: "2.0"
+info:
+  description: API para consulta de valores de frete através de integrações com transportadoras.
+  title: API de Cotação de Frete
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: API Support
+    url: http://www.freterapido.com
+    email: suporte@freterapido.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: "1.0"
+host: localhost:3000
+basePath: /
+paths:
+  /metrics:
+    get:
+      description: Retorna métricas e estatísticas sobre as cotações de frete realizadas
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - métricas
+      summary: Obter métricas de cotações
+      parameters:
+      - type: integer
+        description: Número de cotações recentes a considerar (opcional)
+        name: last_quotes
+        in: query
+      responses:
+        "200":
+          description: Métricas de cotações
+          schema:
+            $ref: '#/definitions/domain.MetricsResponse'
+        "400":
+          description: Erro de parâmetro inválido
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        "500":
+          description: Erro interno do servidor
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+  /quote:
+    post:
+      description: Retorna cotações de frete de diferentes transportadoras com base nos dados enviados
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - cotações
+      summary: Obter cotações de frete
+      parameters:
+      - description: Dados para cotação de frete
+        name: request
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.QuoteRequest'
+      responses:
+        "200":
+          description: Cotações de frete disponíveis
+          schema:
+            $ref: '#/definitions/domain.QuoteResponse'
+        "400":
+          description: Erro de requisição inválida
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        "500":
+          description: Erro interno do servidor
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+definitions:
+  domain.Carrier:
+    description: Informações sobre a cotação de uma transportadora específica
+    type: object
+    properties:
+      deadline:
+        description: Prazo de entrega em dias
+        type: string
+        example: "3"
+      name:
+        description: Nome da transportadora
+        type: string
+        example: EXPRESSO FR
+      price:
+        description: Valor do frete
+        type: number
+        example: 17
+      service:
+        description: Serviço oferecido
+        type: string
+        example: Rodoviário
+  domain.CheapestAndMostExpensive:
+    description: Valores mínimos e máximos encontrados nas cotações
+    type: object
+    properties:
+      cheapest_shipping:
+        description: Valor do frete mais barato
+        type: number
+        example: 12.5
+      most_expensive_shipping:
+        description: Valor do frete mais caro
+        type: number
+        example: 30.75
+  domain.MetricsResponse:
+    description: Resposta completa com todas as métricas de cotações
+    type: object
+    properties:
+      carrier_metrics:
+        description: Lista de métricas por transportadora
+        type: array
+        items:
+          $ref: '#/definitions/domain.QuoteMetrics'
+      cheapest_and_most_expensive:
+        description: Detalhes sobre os valores mínimos e máximos de frete
+        $ref: '#/definitions/domain.CheapestAndMostExpensive'
+  domain.QuoteMetrics:
+    description: Métricas de cotações para uma transportadora específica
+    type: object
+    properties:
+      average_shipping_price:
+        description: Valor médio dos fretes cotados
+        type: number
+        example: 15.05
+      carrier_name:
+        description: Nome da transportadora
+        type: string
+        example: EXPRESSO FR
+      total_quotes:
+        description: Total de cotações realizadas
+        type: integer
+        example: 10
+      total_shipping_price:
+        description: Valor total dos fretes cotados
+        type: number
+        example: 150.5
+  domain.QuoteRequest:
+    description: Solicitação para obter cotações de frete de diferentes transportadoras
+    type: object
+    properties:
+      recipient:
+        description: Informações do destinatário
+        type: object
+        properties:
+          address:
+            description: Endereço do destinatário
+            type: object
+            properties:
+              zipcode:
+                description: CEP do destinatário (obrigatório)
+                type: string
+                example: "01311000"
+      volumes:
+        description: Lista de volumes para cálculo de frete
+        type: array
+        items:
+          $ref: '#/definitions/domain.Volume'
+  domain.QuoteResponse:
+    description: Resposta com as cotações de frete disponíveis
+    type: object
+    properties:
+      carrier:
+        description: Lista de transportadoras e seus valores
+        type: array
+        items:
+          $ref: '#/definitions/domain.Carrier'
+  domain.Volume:
+    description: Detalhes de um volume para cotação de frete
+    type: object
+    properties:
+      amount:
+        description: Quantidade de itens
+        type: integer
+        example: 1
+      category:
+        description: Categoria do produto
+        type: integer
+        example: 7
+      height:
+        description: Altura do volume em metros
+        type: number
+        example: 0.2
+      length:
+        description: Comprimento do volume em metros
+        type: number
+        example: 0.2
+      price:
+        description: Preço unitário do produto
+        type: number
+        example: 349.9
+      sku:
+        description: Código SKU do produto
+        type: string
+        example: abc-teste-123
+      unitary_weight:
+        description: Peso unitário em kg
+        type: number
+        example: 5
+      width:
+        description: Largura do volume em metros
+        type: number
+        example: 0.2 

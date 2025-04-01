@@ -12,8 +12,8 @@ RUN go mod download
 # Copiando o código-fonte
 COPY . .
 
-# Definindo o diretório de trabalho gerar o build
-WORKDIR /app/cmd/server
+# Definindo o diretório de trabalho para gerar o build
+WORKDIR /app/api/cmd/api
 
 # Construindo o executável
 RUN go build -o api

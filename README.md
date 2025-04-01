@@ -6,16 +6,21 @@
 ![GORM](https://img.shields.io/badge/GORM-ORM-lightblue)
 ![DDD](https://img.shields.io/badge/DDD-Architecture-orange)
 ![Clean Architecture](https://img.shields.io/badge/Clean-Architecture-red)
+![Swagger](https://img.shields.io/badge/Swagger-Documentation-green)
 
 ## Sumário
 
 - [Descrição](#descrição)
+- [Contexto do Desafio](#contexto-do-desafio)
 - [Arquitetura](#arquitetura)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Instalação e Configuração](#instalação-e-configuração)
 - [Rotas da API](#rotas-da-api)
+- [Documentação Swagger](#documentação-swagger)
 - [Testes](#testes)
 - [Docker e Docker Compose](#docker-e-docker-compose)
+- [Observações sobre a API do Frete Rápido](#observações-sobre-a-api-do-frete-rápido)
+- [Conclusão e Trabalhos Futuros](#conclusão-e-trabalhos-futuros)
 
 ## Descrição
 
@@ -26,6 +31,29 @@ A API de Cotação de Frete é um sistema para consulta de valores de frete atra
 - Consulta de cotações de frete com diferentes transportadoras
 - Métricas e análises estatísticas sobre as cotações realizadas
 - Armazenamento de histórico de cotações para consulta posterior
+- Integração com o serviço Frete Rápido para obtenção de cotações reais
+
+## Contexto do Desafio
+
+Este projeto foi desenvolvido como parte de um desafio técnico para demonstrar habilidades em desenvolvimento back-end com Go. O desafio consistia em criar uma API para cotação de fretes com os seguintes requisitos:
+
+### Requisitos Funcionais
+
+1. **Cotação de Frete**: Endpoint que recebe informações de volumes e CEP para cotação de frete
+2. **Integração Externa**: Consumo da API do Frete Rápido para obtenção de cotações reais
+3. **Persistência**: Armazenamento das cotações em banco de dados
+4. **Métricas**: Endpoint para consulta de métricas sobre as cotações realizadas
+
+### Requisitos Não-Funcionais
+
+1. **Arquitetura**: Utilização de DDD e Clean Architecture
+2. **Testes**: Implementação de testes unitários e de integração
+3. **Documentação**: Documentação da API com Swagger
+4. **Containerização**: Configuração com Docker e Docker Compose
+
+### Solução Implementada
+
+A solução consiste em uma API RESTful desenvolvida em Go com o framework Gin, seguindo princípios de Domain-Driven Design e Clean Architecture. A aplicação realiza consultas à API do Frete Rápido, armazena os resultados em um banco de dados PostgreSQL e oferece endpoints para cotação e análise de métricas.
 
 ## Arquitetura
 
@@ -63,6 +91,7 @@ api/
 - **Framework HTTP**: Gin
 - **ORM**: GORM
 - **Banco de Dados**: PostgreSQL
+- **Documentação**: Swagger
 - **Testes**: Testify, Go-SQLMock
 - **Containerização**: Docker e Docker Compose
 
@@ -85,6 +114,9 @@ api/
 2. Instale as dependências:
    ```bash
    go mod tidy
+   go get -u github.com/swaggo/swag/cmd/swag
+   go get -u github.com/swaggo/gin-swagger
+   go get -u github.com/swaggo/files
    ```
 
 3. Configure o banco de dados:
@@ -206,9 +238,72 @@ A API disponibiliza os seguintes endpoints:
 }
 ```
 
-## Testes
+## Documentação Swagger
 
-O projeto inclui testes unitários e de integração para validar o funcionamento correto da aplicação.
+A API utiliza o Swagger para documentação interativa dos endpoints. A documentação pode ser acessada em:
+
+```
+http://localhost:3000/swagger/index.html
+```
+
+### Recursos da documentação:
+
+- **Visualização de endpoints**: Lista completa de endpoints com descrições
+- **Modelos de dados**: Visualização de todas as estruturas de dados utilizadas
+- **Testes interativos**: Possibilidade de testar os endpoints diretamente pela interface
+- **Exemplos de resposta**: Exemplos de JSON para respostas bem-sucedidas
+
+### Endpoints Documentados
+
+A documentação Swagger inclui detalhes completos dos seguintes endpoints:
+
+#### 1. POST /quote
+- **Tags**: cotações
+- **Descrição**: Retorna cotações de frete de diferentes transportadoras com base nos dados enviados
+- **Parâmetros**: Corpo da requisição com dados do destinatário e volumes
+- **Respostas**: 200 (sucesso), 400 (requisição inválida), 500 (erro interno)
+- **Modelo de entrada**: domain.QuoteRequest
+- **Modelo de saída**: domain.QuoteResponse
+
+#### 2. GET /metrics
+- **Tags**: métricas
+- **Descrição**: Retorna métricas e estatísticas sobre as cotações de frete realizadas
+- **Parâmetros**: Query parameter `last_quotes` (opcional) para limitar número de cotações
+- **Respostas**: 200 (sucesso), 400 (parâmetro inválido), 500 (erro interno)
+- **Modelo de saída**: domain.MetricsResponse
+
+### Modelos de Dados
+
+A documentação inclui definições completas dos seguintes modelos:
+
+- **domain.QuoteRequest**: Solicitação para obter cotações de frete
+- **domain.QuoteResponse**: Resposta com as cotações disponíveis
+- **domain.Carrier**: Informações sobre uma transportadora específica
+- **domain.Volume**: Detalhes de um volume para cotação
+- **domain.MetricsResponse**: Resposta com métricas de cotações
+- **domain.QuoteMetrics**: Métricas para uma transportadora específica
+- **domain.CheapestAndMostExpensive**: Valores mínimos e máximos encontrados
+
+### Implementação do Swagger
+
+O Swagger foi implementado no projeto utilizando:
+
+1. **gin-swagger**: Middleware para servir a documentação Swagger no Gin
+2. **swaggo/swag**: Gerador de documentação Swagger a partir de anotações no código
+3. **swaggo/files**: Arquivos estáticos para a UI do Swagger
+
+A configuração do Swagger está presente em:
+- `api/interfaces/routers/router.go`: Configuração da rota do Swagger
+- `docs/swagger.json`: Arquivo de definição do Swagger gerado
+- `docs/swagger.yaml`: Versão YAML da definição do Swagger
+
+### Gerando a documentação Swagger:
+
+Para atualizar a documentação após mudanças no código, execute:
+
+```bash
+swag init -g api/cmd/api/main.go -o docs
+```
 
 ### Executando os testes
 
@@ -226,6 +321,7 @@ make test-integration
 ```bash
 make test
 ```
+
 
 ## Docker e Docker Compose
 
@@ -265,3 +361,40 @@ Para consumir a API do Frete Rápido, os seguintes dados são obrigatórios:
 - Código Plataforma: 5AKVkHqCn
 - CEP: 29161-376 (dispatchers[*].zipcode)
 - O campo "unitary_price" deve ser informado
+
+## Conclusão e Trabalhos Futuros
+
+### Conclusão
+
+Este projeto implementa uma API de Cotação de Frete seguindo boas práticas de desenvolvimento, arquitetura e documentação. As principais características do projeto incluem:
+
+- **Design Robusto**: Arquitetura em camadas seguindo princípios de DDD e Clean Architecture
+- **API Bem Documentada**: Documentação completa com Swagger
+- **Testes**: Estrutura de testes unitários e de integração
+- **Containerização**: Configuração com Docker para facilitar a execução e implantação
+- **Integração Externa**: Conexão com serviço real de cotação de fretes
+
+A API atende aos requisitos definidos no desafio, oferecendo endpoints para cotação de frete e análise de métricas, persistência em banco de dados e integração com o serviço Frete Rápido.
+
+### Trabalhos Futuros
+
+Os seguintes pontos foram identificados para melhorias e expansões futuras:
+
+#### Aprimoramentos de Código
+- **Completar testes**: Implementar mocks adequados para HTTP client e GORM
+- **Corrigir testes de controllers**: Resolver problemas de compilação nos testes da camada de interface
+- **Melhorar tratamento de erros**: Implementação mais robusta de tratamento de exceções
+
+#### Novas Funcionalidades
+- **Autenticação e Autorização**: Adicionar mecanismos de segurança como JWT
+- **Rate Limiting**: Implementar controle de taxa para evitar sobrecarga da API
+- **Cache**: Adicionar cache para cotações recentes para melhorar desempenho
+- **Webhooks**: Implementar sistema de notificações para eventos específicos
+
+#### Infraestrutura
+- **CI/CD**: Configurar pipeline de integração e entrega contínua
+- **Monitoramento**: Integrar com ferramentas como Prometheus e Grafana
+- **Escalabilidade**: Preparar a aplicação para escalabilidade horizontal
+- **Observabilidade**: Adicionar instrumentação para rastreamento de requisições
+
+Este projeto serve como uma base sólida para uma aplicação de cotação de fretes e pode ser expandido em diversas direções conforme as necessidades do negócio evoluem.

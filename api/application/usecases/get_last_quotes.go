@@ -2,48 +2,21 @@ package usecases
 
 import (
 	"context"
-	"time"
 
-	"github.com/thalesmacedo1/covid-api/domain/entities"
-	"github.com/thalesmacedo1/covid-api/domain/repositories"
+	domain "github.com/thalesmacedo1/freterapido-backend-api/api/domain/entities"
 )
 
-type GetLastQuotesUseCase interface {
-	Execute(ctx context.Context, input GetLastQuotesInput) (*GetLastQuotesOutput, error)
+type GetLastQuotesUseCase struct {
+	quoteRepository domain.QuoteRepository
 }
 
-type GetLastQuotesInput struct {
-	Date time.Time
-}
-
-type GetLastQuotesOutput struct {
-	Country         entities.Country
-	CumulativeCases int
-}
-
-type getLastQuotesUseCase struct {
-	countryRepo repositories.CountryRepository
-}
-
-func NewGetLastQuotesUseCase(covidRepo repositories.CovidStatsRepository, countryRepo repositories.CountryRepository) GetLastQuotesUseCase {
-	return &getLastQuotesUseCase{
-		countryRepo: countryRepo,
+func NewGetLastQuotesUseCase(quoteRepository domain.QuoteRepository) *GetLastQuotesUseCase {
+	return &GetLastQuotesUseCase{
+		quoteRepository: quoteRepository,
 	}
 }
 
-func (uc *getLastQuotesUseCase) Execute(ctx context.Context, input GetLastQuotesInput) (*GetLastQuotesOutput, error) {
-
-	countryWithMostCases, cumulativeCases, err := uc.covidStatsRepo.GetLastQuotes(ctx, input.Date)
-	if err != nil {
-		return nil, err
-	}
-
-	country, err := uc.countryRepo.GetCountryByCode(ctx, countryWithMostCases)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetLastQuotesOutput{
-		Country: *country,
-	}, nil
+func (uc *GetLastQuotesUseCase) Execute(ctx context.Context, limit int) ([]domain.QuoteResponse, error) {
+	// Get last quotes from repository
+	return uc.quoteRepository.GetLastQuotes(ctx, limit)
 }

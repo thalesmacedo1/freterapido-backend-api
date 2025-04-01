@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17
+    image: postgres:15
     restart: always
     container_name: db
     environment:
@@ -25,6 +25,16 @@ services:
     container_name: freterapido-backend-api
     environment:
       - PORT=${PORT}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - BASE_URL=${BASE_URL}
+      - CNPJ_SENDER=${CNPJ_SENDER}
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - PLATFORM_CODE=${PLATFORM_CODE}
+      - ZIP_CODE=${ZIP_CODE}
     ports:
       - "3000:3000"
     depends_on:
@@ -32,3 +42,4 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app/src
+      - ./.env:/app/.env
