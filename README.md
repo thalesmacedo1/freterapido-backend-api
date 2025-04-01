@@ -269,56 +269,22 @@ A API utiliza o Swagger para documentação interativa dos endpoints. A document
 http://localhost:3000/swagger/index.html
 ```
 
-### Recursos da documentação:
-
-- **Visualização de endpoints**: Lista completa de endpoints com descrições
-- **Modelos de dados**: Visualização de todas as estruturas de dados utilizadas
-- **Testes interativos**: Possibilidade de testar os endpoints diretamente pela interface
-- **Exemplos de resposta**: Exemplos de JSON para respostas bem-sucedidas
-
 ### Endpoints Documentados
 
 A documentação Swagger inclui detalhes completos dos seguintes endpoints:
 
 #### 1. POST /quote
-- **Tags**: cotações
 - **Descrição**: Retorna cotações de frete de diferentes transportadoras com base nos dados enviados
 - **Parâmetros**: Corpo da requisição com dados do destinatário e volumes
 - **Respostas**: 200 (sucesso), 400 (requisição inválida), 500 (erro interno)
 - **Modelo de entrada**: domain.QuoteRequest
 - **Modelo de saída**: domain.QuoteResponse
 
-#### 2. GET /metrics
-- **Tags**: métricas
+#### 2. GET /metrics?last_quotes={?}
 - **Descrição**: Retorna métricas e estatísticas sobre as cotações de frete realizadas
 - **Parâmetros**: Query parameter `last_quotes` (opcional) para limitar número de cotações
 - **Respostas**: 200 (sucesso), 400 (parâmetro inválido), 500 (erro interno)
 - **Modelo de saída**: domain.MetricsResponse
-
-### Modelos de Dados
-
-A documentação inclui definições completas dos seguintes modelos:
-
-- **domain.QuoteRequest**: Solicitação para obter cotações de frete
-- **domain.QuoteResponse**: Resposta com as cotações disponíveis
-- **domain.Carrier**: Informações sobre uma transportadora específica
-- **domain.Volume**: Detalhes de um volume para cotação
-- **domain.MetricsResponse**: Resposta com métricas de cotações
-- **domain.QuoteMetrics**: Métricas para uma transportadora específica
-- **domain.CheapestAndMostExpensive**: Valores mínimos e máximos encontrados
-
-### Implementação do Swagger
-
-O Swagger foi implementado no projeto utilizando:
-
-1. **gin-swagger**: Middleware para servir a documentação Swagger no Gin
-2. **swaggo/swag**: Gerador de documentação Swagger a partir de anotações no código
-3. **swaggo/files**: Arquivos estáticos para a UI do Swagger
-
-A configuração do Swagger está presente em:
-- `api/interfaces/routers/router.go`: Configuração da rota do Swagger
-- `docs/swagger.json`: Arquivo de definição do Swagger gerado
-- `docs/swagger.yaml`: Versão YAML da definição do Swagger
 
 ### Gerando a documentação Swagger:
 
@@ -374,50 +340,3 @@ O projeto inclui arquivos para execução em ambiente Docker:
   ```bash
   make run
   ```
-
-## Observações sobre a API do Frete Rápido
-
-Para consumir a API do Frete Rápido, os seguintes dados são obrigatórios:
-
-- CNPJ Remetente: 25.438.296/0001-58 (mesmo valor para "shipper.registered_number" e "dispatchers.registered_number")
-- Token de autenticação: 1d52a9b6b78cf07b08586152459a5c90
-- Código Plataforma: 5AKVkHqCn
-- CEP: 29161-376 (dispatchers[*].zipcode)
-- O campo "unitary_price" deve ser informado
-
-## Conclusão e Trabalhos Futuros
-
-### Conclusão
-
-Este projeto implementa uma API de Cotação de Frete seguindo boas práticas de desenvolvimento, arquitetura e documentação. As principais características do projeto incluem:
-
-- **Design Robusto**: Arquitetura em camadas seguindo princípios de DDD e Clean Architecture
-- **API Bem Documentada**: Documentação completa com Swagger
-- **Testes**: Estrutura de testes unitários e de integração
-- **Containerização**: Configuração com Docker para facilitar a execução e implantação
-- **Integração Externa**: Conexão com serviço real de cotação de fretes
-
-A API atende aos requisitos definidos no desafio, oferecendo endpoints para cotação de frete e análise de métricas, persistência em banco de dados e integração com o serviço Frete Rápido.
-
-### Trabalhos Futuros
-
-Os seguintes pontos foram identificados para melhorias e expansões futuras:
-
-#### Aprimoramentos de Código
-- **Completar testes**: Implementar mocks adequados para HTTP client e GORM
-- **Corrigir testes de controllers**: Resolver problemas de compilação nos testes da camada de interface
-- **Melhorar tratamento de erros**: Implementação mais robusta de tratamento de exceções
-
-#### Novas Funcionalidades
-- **Autenticação e Autorização**: Adicionar mecanismos de segurança como JWT
-- **Rate Limiting**: Implementar controle de taxa para evitar sobrecarga da API
-- **Cache**: Adicionar cache para cotações recentes para melhorar desempenho
-- **Webhooks**: Implementar sistema de notificações para eventos específicos
-
-#### Infraestrutura
-- **CI/CD**: Configurar pipeline de integração e entrega contínua
-- **Monitoramento**: Integrar com ferramentas como Prometheus e Grafana
-- **Escalabilidade**: Preparar a aplicação para escalabilidade horizontal
-- **Observabilidade**: Adicionar instrumentação para rastreamento de requisições
-
-Este projeto serve como uma base sólida para uma aplicação de cotação de fretes e pode ser expandido em diversas direções conforme as necessidades do negócio evoluem.
