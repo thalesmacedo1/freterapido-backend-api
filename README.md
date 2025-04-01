@@ -1,263 +1,267 @@
-# FreteRápido Backend Test
+# API de Cotação de Frete - Frete Rápido
 
-![Go](https://img.shields.io/badge/Go-1.20-blue)
+![Go](https://img.shields.io/badge/Go-1.21-blue)
 ![Gin](https://img.shields.io/badge/Gin-Framework-brightgreen)
-![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Containerization-blue)
-
-Este projeto é uma implementação de uma API RESTful para listagem e consulta de dados sobre a COVID-19.
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![GORM](https://img.shields.io/badge/GORM-ORM-lightblue)
+![DDD](https://img.shields.io/badge/DDD-Architecture-orange)
+![Clean Architecture](https://img.shields.io/badge/Clean-Architecture-red)
 
 ## Sumário
 
 - [Descrição](#descrição)
-- [Problemas](#problemas)
-- [Requisitos Funcionais](#requisitos-funcionais)
 - [Arquitetura](#arquitetura)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Instalação e Configuração](#instalação-e-configuração)
-- [Importação do CSV](#importação-do-csv)
-- [Execução](#execução)
 - [Rotas da API](#rotas-da-api)
-- [Validação de Documentos (CPF/CNPJ)](#validação-de-documentos-cpfcnpj)
-- [Testes e Cobertura](#testes-e-cobertura)
+- [Testes](#testes)
 - [Docker e Docker Compose](#docker-e-docker-compose)
-- [Melhorias Futuras](#melhorias-futuras)
-
----
 
 ## Descrição
-A API de Dados COVID oferece acesso a informações relacionadas à vacinação da COVID-19. Com esta API, desenvolvedores podem recuperar dados sobre casos confirmados, óbitos, taxas de vacinação e outras métricas relevantes.
 
-Principais funcionalidades:
-Dados Globais e Regionais: Acesso a estatísticas de diversos países, estados e municípios.
-Atualizações em Tempo Real: Informações constantemente atualizadas para refletir a situação atual da pandemia.
-Histórico de Dados: Consulta de dados históricos para análises temporais e identificação de tendências.
-Filtros por País, Região ou Data: Possibilidade de filtrar dados especificamente por país, região ou data desejada.
+A API de Cotação de Frete é um sistema para consulta de valores de frete através de integrações com transportadoras. Desenvolvida com Go, segue os princípios de Domain-Driven Design (DDD) e Clean Architecture, proporcionando uma solução modular, testável e de fácil manutenção.
 
-```
-freterapido-backend-api/
-│
-├── domain/                # Camada de Domínio
-│   ├── entities/          # Modelos de domínio puros
-│   └── interfaces/        # Interfaces de repositórios e serviços DEFINIDAS NO DOMÍNIO
-│       ├── repositories/  # Contratos (interfaces) de repositórios
-│       └── services/      # Contratos (interfaces) de serviços de domínio
-│
-├── application/           # Camada de Infraestrutura
-|   └── services/          # Serviços de aplicação
-|    └── interfaces/       # Interfaces adicionais de aplicação
-│
-└── infrastructure/        # Camada de Aplicação
-│   └── repositories/      
-│       └── postgres/      
-│       └── redis/         
-```
+### Funcionalidades Principais
 
----
-
-## Requisitos Funcionais
-
-1. Total Acumulado de Casos e Mortes por País e Data.
-2. Número de Pessoas Vacinadas com Pelo Menos Uma Dose.
-3. Vacinas Utilizadas e Data de Início de Aplicação.
-4. País com o Maior Número de Casos Acumulados até uma Data.
-5. Vacina Mais Utilizada em uma Região Específica.
-
----
+- Consulta de cotações de frete com diferentes transportadoras
+- Métricas e análises estatísticas sobre as cotações realizadas
+- Armazenamento de histórico de cotações para consulta posterior
 
 ## Arquitetura
 
-A solução adota Clean Architecture e DDD, separando bem as camadas:
+O projeto segue uma arquitetura em camadas baseada nos princípios de DDD e Clean Architecture:
 
-- **domain**: Entidades e regras de negócio puras.
-- **usecase**: Casos de uso que orquestram a lógica de negócio.
-- **infrastructure**: Implementações concretas de banco de dados, importação e validações.
-- **interface**: Handlers HTTP e roteamento.
-- **cmd/server**: Ponto de entrada da aplicação.
+```
+api/
+├── domain/                  # Camada de Domínio
+│   └── entities/            # Entidades e regras de negócio
+│       
+├── application/             # Camada de Aplicação
+│   └── usecases/            # Casos de uso da aplicação
+│       
+├── infrastructure/          # Camada de Infraestrutura
+│   └── database/            # Implementações de persistência
+│       
+├── interfaces/              # Camada de Interface
+│   ├── api/                 # Controllers HTTP
+│   └── routers/             # Configuração de rotas
+│       
+└── cmd/                     # Pontos de entrada do sistema
+    └── api/                 # Servidor HTTP
+```
 
-### Benefícios da Arquitetura Adotada
-- **Separação de Preocupações**: Cada camada possui responsabilidades bem definidas, facilitando o entendimento e a manutenção do código.
-- **Escalabilidade**: A modularidade permite que novas funcionalidades sejam adicionadas sem impactar negativamente as camadas existentes.
-- **Testabilidade**: A independência entre as camadas facilita a realização de testes unitários e de integração, assegurando a qualidade do código.
-- **Flexibilidade**: Utilizando interfaces na camada de domínio, é possível substituir ou atualizar implementações de infraestrutura com mínima alteração no restante do sistema.
-- **Reutilização de Código**: Componentes bem definidos podem ser reutilizados em diferentes partes da aplicação ou até mesmo em outros projetos.
----
+### Benefícios da Arquitetura
+
+- **Desacoplamento**: Cada camada possui responsabilidades bem definidas
+- **Testabilidade**: Facilidade para escrever testes unitários e de integração
+- **Manutenibilidade**: Código organizado e de fácil compreensão
+- **Escalabilidade**: Facilidade para adicionar novos recursos
 
 ## Tecnologias Utilizadas
 
-- **Linguagem**: Go (golang) 1.23+
+- **Linguagem**: Go 1.23+
 - **Framework HTTP**: Gin
-- **Banco de Dados**: PostgreSQL, Redis
-- **Testes**: `testing` nativo do Go e a lib Testify
-- **Docker**: Para containerização das duas aplicações e dos bancos de dados necessários
-
----
+- **ORM**: GORM
+- **Banco de Dados**: PostgreSQL
+- **Testes**: Testify, Go-SQLMock
+- **Containerização**: Docker e Docker Compose
 
 ## Instalação e Configuração
 
-1. **Pré-requisitos**:
-   - Go 1.23+
-   - Docker e Docker Compose
-   - PostgreSQL
+### Pré-requisitos
 
-2. **Clonar o repositório**:
+- Go 1.23+
+- PostgreSQL
+- Docker e Docker Compose (opcional)
+
+### Instalação local
+
+1. Clone o repositório:
    ```bash
    git clone https://github.com/thalesmacedo1/freterapido-backend-api.git
    cd freterapido-backend-api
    ```
 
-3. **Variáveis de Ambiente**:
-   Os exemplos estão contidos no arquivo `.env.example` na raiz do projeto.
-
-4. **Dependências**:
-Rodando manualmente na pasta principal de cada uma das aplicações:
+2. Instale as dependências:
    ```bash
    go mod tidy
    ```
 
----
+3. Configure o banco de dados:
+   - Certifique-se de que o PostgreSQL está em execução
+   - Crie um banco de dados para a aplicação
+   - Configure as variáveis de ambiente ou ajuste a string de conexão em `api/cmd/api/main.go`
 
-## Execução
-
-### Sem Docker
-
-- Certifique-se que o PostgreSQL está rodando e as variáveis de ambiente apontam para o banco de dados correto.
-- Rode o servidor:
-  ```bash
-  go run cmd/server/main.go
-  ```
-
-A aplicação estará disponível em `http://localhost:8080`.
-
-### Com Docker
-
-Para executar com containers docker, rode:
+4. Execute a aplicação:
    ```bash
-   make run
+   go run api/cmd/api/main.go
    ```
 
----
+### Instalação com Docker
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/thalesmacedo1/freterapido-backend-api.git
+   cd freterapido-backend-api
+   ```
+
+2. Inicie os containers:
+   ```bash
+   docker-compose up -d
+   ```
 
 ## Rotas da API
-Importante: o formato da data é YYYY-MM-DD
 
-- **GET `/api/v1/countries/:countryCode/covid/:date`**  
-Descrição: Obtém o total de casos confirmados e mortes em um país específico em uma data determinada.
+A API disponibiliza os seguintes endpoints:
 
-  **Exemplo de resposta**:
-  ```json
-  {
-    "error": "Failed to retrieve COVID totals."
-  }
-  ```
+### 1. Cotação de Frete
 
+**Endpoint**: `POST /quote`
 
-- **GET `/api/v1/countries/:countryCode/vaccinations/:date`**  
-Descrição: Retorna a quantidade de indivíduos vacinados com pelo menos uma dose em um país específico em uma data determinada.
+**Descrição**: Recebe dados do destinatário e volumes para realizar cotação de frete com diferentes transportadoras.
 
-  **Exemplo de resposta**:
-  ```json
-  {
-    "error": "Failed to retrieve vaccinated people data."
-  }
-  ```
-
-- **GET `/api/v1/countries/:countryCode/vaccines`**  
-Descrição: Lista as vacinas utilizadas em um país específico e as datas de início de aplicação.
-Resultados para BRA (Brasil):
-
-  **Exemplo de resposta**:
-  ```json
-  [
+**Requisição**:
+```json
+{
+  "recipient": {
+    "address": {
+      "zipcode": "01311000"
+    }
+  },
+  "volumes": [
     {
-      "vaccine": {
-        "Product": "SII - Covishield",
-        "Company": "Serum Institute of India",
-        "Vaccine": "Covishield"
-      },
-      "start_date": "0001-01-01"
+      "category": 7,
+      "amount": 1,
+      "unitary_weight": 5,
+      "price": 349,
+      "sku": "abc-teste-123",
+      "height": 0.2,
+      "width": 0.2,
+      "length": 0.2
     },
     {
-      "vaccine": {
-        "Product": "Sinovac - CoronaVac",
-        "Company": "Sinovac",
-        "Vaccine": "Coronavac"
-      },
-      "start_date": "0001-01-01"
-    },
-    {
-      "vaccine": {
-        "Product": "Janssen - Ad26.COV 2-S",
-        "Company": "Janssen Pharmaceuticals",
-        "Vaccine": "Ad26.COV 2-S"
-      },
-      "start_date": "0001-01-01"
-    },
-    {
-      "vaccine": {
-        "Product": "Pfizer BioNTech - Comirnaty",
-        "Company": "Pfizer BioNTech",
-        "Vaccine": "Comirnaty"
-      },
-      "start_date": "0001-01-01"
-    },
-    {
-      "vaccine": {
-        "Product": "AstraZeneca - Vaxzevria",
-        "Company": "AstraZeneca",
-        "Vaccine": "Vaxzevria"
-      },
-      "start_date": "0001-01-01"
+      "category": 7,
+      "amount": 2,
+      "unitary_weight": 4,
+      "price": 556,
+      "sku": "abc-teste-527",
+      "height": 0.4,
+      "width": 0.6,
+      "length": 0.15
     }
   ]
+}
+```
 
-  ```
+**Resposta**:
+```json
+{
+  "carrier": [
+    {
+      "name": "EXPRESSO FR",
+      "service": "Rodoviário",
+      "deadline": "3",
+      "price": 17
+    },
+    {
+      "name": "Correios",
+      "service": "SEDEX",
+      "deadline": "1",
+      "price": 20.99
+    }
+  ]
+}
+```
 
-- **GET `/api/v1/countries/highest-cases?:date`**  
-Descrição: Identifica o país com o maior número de casos acumulados até uma data específica.
+### 2. Métricas de Cotações
 
-  **Exemplo de resposta**:
-  ```json
-  {
-    "error": "Failed to get country with most cases"
+**Endpoint**: `GET /metrics?last_quotes={quantidade}`
+
+**Descrição**: Retorna métricas sobre as cotações realizadas. O parâmetro `last_quotes` é opcional e limita a análise às N cotações mais recentes.
+
+**Parâmetros de consulta**:
+- `last_quotes` (opcional): Número inteiro que indica quantas cotações recentes devem ser consideradas na análise
+
+**Resposta**:
+```json
+{
+  "carrier_metrics": [
+    {
+      "carrier_name": "EXPRESSO FR",
+      "total_quotes": 10,
+      "total_shipping_price": 150.50,
+      "average_shipping_price": 15.05
+    },
+    {
+      "carrier_name": "Correios",
+      "total_quotes": 5,
+      "total_shipping_price": 120.25,
+      "average_shipping_price": 24.05
+    }
+  ],
+  "cheapest_and_most_expensive": {
+    "cheapest_shipping": 12.50,
+    "most_expensive_shipping": 30.75
   }
-  ```
+}
+```
 
-- **GET `/api/v1/regions/:regionName/vaccines/most-used`**  
-Descrição: Retorna a vacina mais utilizada em uma determinada região.
+## Testes
 
-  **Exemplo de resposta**:
-  ```json
-  {
-    "error": "Failed to retrieve most used vaccine."
-  }
-  ```
+O projeto inclui testes unitários e de integração para validar o funcionamento correto da aplicação.
 
----
+### Executando os testes
 
-## Testes e Cobertura
+#### Testes unitários
+```bash
+make test-unit
+```
 
-Para rodar os testes:
+#### Testes de integração
+```bash
+make test-integration
+```
 
+#### Todos os testes
 ```bash
 make test
 ```
----
 
 ## Docker e Docker Compose
 
-O projeto inclui um `docker-compose.yml` e dois `Dockerfile`.
+O projeto inclui arquivos para execução em ambiente Docker:
 
-- O banco ficará disponível em `http://localhost:7474/`, com usuário `PostgreSQL` e senha padrão contida no `.env.example` 
+- `Dockerfile`: Configuração para construir a imagem da aplicação
+- `docker-compose.yml`: Configuração para orquestrar os containers da aplicação e banco de dados
 
-A aplicação Go pode ser executada localmente conectando-se ao container do PostgreSQL conforme as variáveis de ambiente definidas no `.env.example`.
+### Comandos úteis
 
----
+- Iniciar aplicação e banco de dados:
+  ```bash
+  make docker-up
+  ```
 
-## Melhorias Futuras
+- Parar containers:
+  ```bash
+  make docker-down
+  ```
 
-- Implementar testes de integração para as rotas HTTP.
-- Adicionar autenticação e autorização se preciso.
-- Otimizar a importação, caso o CSV seja muito grande.
-- Criar uma rota para importar o CSV sob demanda.
+- Construir aplicação:
+  ```bash
+  make build
+  ```
+
+- Executar aplicação localmente:
+  ```bash
+  make run
+  ```
+
+## Observações sobre a API do Frete Rápido
+
+Para consumir a API do Frete Rápido, os seguintes dados são obrigatórios:
+
+- CNPJ Remetente: 25.438.296/0001-58 (mesmo valor para "shipper.registered_number" e "dispatchers.registered_number")
+- Token de autenticação: 1d52a9b6b78cf07b08586152459a5c90
+- Código Plataforma: 5AKVkHqCn
+- CEP: 29161-376 (dispatchers[*].zipcode)
+- O campo "unitary_price" deve ser informado
