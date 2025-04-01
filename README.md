@@ -26,34 +26,12 @@
 
 A API de Cotação de Frete é um sistema para consulta de valores de frete através de integrações com transportadoras. Desenvolvida com Go, segue os princípios de Domain-Driven Design (DDD) e Clean Architecture, proporcionando uma solução modular, testável e de fácil manutenção.
 
-### Funcionalidades Principais
-
-- Consulta de cotações de frete com diferentes transportadoras
-- Métricas e análises estatísticas sobre as cotações realizadas
-- Armazenamento de histórico de cotações para consulta posterior
-- Integração com o serviço Frete Rápido para obtenção de cotações reais
-
-## Contexto do Desafio
-
-Este projeto foi desenvolvido como parte de um desafio técnico para demonstrar habilidades em desenvolvimento back-end com Go. O desafio consistia em criar uma API para cotação de fretes com os seguintes requisitos:
-
 ### Requisitos Funcionais
 
 1. **Cotação de Frete**: Endpoint que recebe informações de volumes e CEP para cotação de frete
 2. **Integração Externa**: Consumo da API do Frete Rápido para obtenção de cotações reais
 3. **Persistência**: Armazenamento das cotações em banco de dados
 4. **Métricas**: Endpoint para consulta de métricas sobre as cotações realizadas
-
-### Requisitos Não-Funcionais
-
-1. **Arquitetura**: Utilização de DDD e Clean Architecture
-2. **Testes**: Implementação de testes unitários e de integração
-3. **Documentação**: Documentação da API com Swagger
-4. **Containerização**: Configuração com Docker e Docker Compose
-
-### Solução Implementada
-
-A solução consiste em uma API RESTful desenvolvida em Go com o framework Gin, seguindo princípios de Domain-Driven Design e Clean Architecture. A aplicação realiza consultas à API do Frete Rápido, armazena os resultados em um banco de dados PostgreSQL e oferece endpoints para cotação e análise de métricas.
 
 ## Arquitetura
 
