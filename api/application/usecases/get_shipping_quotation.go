@@ -6,17 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	domain "github.com/thalesmacedo1/freterapido-backend-api/api/domain/entities"
-)
-
-const (
-	FRETE_RAPIDO_API_URL = "https://api.freterapido.com/cotacao/v3"
-	SHIPPER_CNPJ         = "25438296000158"
-	FRETE_RAPIDO_TOKEN   = "1d52a9b6b78cf07b08586152459a5c90"
-	PLATFORM_CODE        = "5AKVkHqCn"
-	DISPATCHER_ZIPCODE   = "29161376"
 )
 
 type GetShippingQuotationUseCase struct {
@@ -54,10 +47,10 @@ func (uc *GetShippingQuotationUseCase) Execute(ctx context.Context, request doma
 func prepareFRRequest(request domain.QuoteRequest) domain.FreteRapidoRequest {
 	frRequest := domain.FreteRapidoRequest{}
 
-	// Set shipper information
-	frRequest.Shipper.RegisteredNumber = SHIPPER_CNPJ
-	frRequest.Shipper.Token = FRETE_RAPIDO_TOKEN
-	frRequest.Shipper.PlatformCode = PLATFORM_CODE
+	// Set shipper information using environment variables
+	frRequest.Shipper.RegisteredNumber = os.Getenv("SHIPPER_CNPJ")
+	frRequest.Shipper.Token = os.Getenv("FRETE_RAPIDO_TOKEN")
+	frRequest.Shipper.PlatformCode = os.Getenv("PLATFORM_CODE")
 
 	// Set recipient information
 	frRequest.Recipient.Address.Zipcode = request.Recipient.Address.Zipcode
@@ -68,8 +61,8 @@ func prepareFRRequest(request domain.QuoteRequest) domain.FreteRapidoRequest {
 		Zipcode          string                     `json:"zipcode"`
 		Volumes          []domain.FreteRapidoVolume `json:"volumes"`
 	}{
-		RegisteredNumber: SHIPPER_CNPJ,
-		Zipcode:          DISPATCHER_ZIPCODE,
+		RegisteredNumber: os.Getenv("SHIPPER_CNPJ"),
+		Zipcode:          os.Getenv("DISPATCHER_ZIPCODE"),
 		Volumes:          []domain.FreteRapidoVolume{},
 	}
 
@@ -100,8 +93,8 @@ func callFreteRapidoAPI(request domain.FreteRapidoRequest) (*domain.FreteRapidoR
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
 
-	// Create HTTP request
-	req, err := http.NewRequest("POST", FRETE_RAPIDO_API_URL, bytes.NewBuffer(jsonData))
+	// Create HTTP request using environment variable for API URL
+	req, err := http.NewRequest("POST", os.Getenv("FRETE_RAPIDO_API_URL"), bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}

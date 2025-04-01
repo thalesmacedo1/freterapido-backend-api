@@ -124,7 +124,30 @@ api/
    - Crie um banco de dados para a aplicação
    - Configure as variáveis de ambiente ou ajuste a string de conexão em `api/cmd/api/main.go`
 
-4. Execute a aplicação:
+4. Configure as variáveis de ambiente:
+   - Crie um arquivo `.env` na raiz do projeto ou copie o exemplo fornecido:
+   ```
+   # Banco de dados
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=freterapido
+   POSTGRES_SYNCHRONIZE=true
+
+   # Servidor
+   PORT=3000
+   BASE_URL=
+
+   # Frete Rápido API
+   FRETE_RAPIDO_API_URL=https://api.freterapido.com/cotacao/v3
+   SHIPPER_CNPJ=25438296000158
+   FRETE_RAPIDO_TOKEN=1d52a9b6b78cf07b08586152459a5c90
+   PLATFORM_CODE=5AKVkHqCn
+   DISPATCHER_ZIPCODE=29161376
+   ```
+
+5. Execute a aplicação:
    ```bash
    go run api/cmd/api/main.go
    ```
