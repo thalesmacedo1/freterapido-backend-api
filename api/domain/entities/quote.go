@@ -65,7 +65,7 @@ type QuoteResponse struct {
 	gorm.Model
 	// Lista de transportadoras com suas cotações
 	// @Description Lista de transportadoras e seus valores
-	Carriers CarriersJSON `json:"carrier" gorm:"type:jsonb"`
+	Carriers CarriersJSON `json:"carrier" gorm:"column:carrier;type:jsonb"`
 }
 
 // CarriersJSON é um tipo personalizado para serializar como JSONB no PostgreSQL

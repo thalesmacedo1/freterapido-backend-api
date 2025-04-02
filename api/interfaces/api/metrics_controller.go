@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -46,14 +47,30 @@ func (c *MetricsController) GetMetrics(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "last_quotes must be a positive integer"})
 			return
 		}
+
+		// Log the last_quotes parameter for debugging
+		fmt.Printf("Processing request with last_quotes=%d\n", lastQuotes)
+	} else {
+		fmt.Println("Processing request without last_quotes parameter")
 	}
 
 	// Execute use case
 	metrics, err := c.getMetricsUseCase.Execute(ctx, lastQuotes)
 	if err != nil {
+		fmt.Printf("Error getting metrics: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get metrics: " + err.Error()})
 		return
 	}
+
+	// Log detailed metrics for debugging
+	fmt.Printf("Returning metrics with %d carrier metrics\n", len(metrics.CarrierMetrics))
+	for i, metric := range metrics.CarrierMetrics {
+		fmt.Printf("  [%d] Carrier: %s, TotalQuotes: %d, TotalPrice: %.2f, AvgPrice: %.2f\n",
+			i, metric.CarrierName, metric.TotalQuotes, metric.TotalShippingPrice, metric.AverageShippingPrice)
+	}
+	fmt.Printf("Cheapest: %.2f, Most Expensive: %.2f\n",
+		metrics.CheapestAndMostExpensive.CheapestShipping,
+		metrics.CheapestAndMostExpensive.MostExpensiveShipping)
 
 	// Return response
 	ctx.JSON(http.StatusOK, metrics)

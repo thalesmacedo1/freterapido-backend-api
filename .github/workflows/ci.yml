@@ -45,4 +45,4 @@ jobs:
 
       - name: Build API application
         working-directory: ./api
-        run: go build -v -o api-app ./api/cmd/api/
+        run: go build -v -o api-app ./cmd/api/
