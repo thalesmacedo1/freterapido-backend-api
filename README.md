@@ -11,16 +11,11 @@
 ## Sumário
 
 - [Descrição](#descrição)
-- [Contexto do Desafio](#contexto-do-desafio)
 - [Arquitetura](#arquitetura)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Instalação e Configuração](#instalação-e-configuração)
 - [Rotas da API](#rotas-da-api)
 - [Documentação Swagger](#documentação-swagger)
-- [Testes](#testes)
-- [Docker e Docker Compose](#docker-e-docker-compose)
-- [Observações sobre a API do Frete Rápido](#observações-sobre-a-api-do-frete-rápido)
-- [Conclusão e Trabalhos Futuros](#conclusão-e-trabalhos-futuros)
 
 ## Descrição
 
@@ -49,7 +44,7 @@ api/
 │   └── database/            # Implementações de persistência
 │       
 ├── interfaces/              # Camada de Interface
-│   ├── api/                 # Controllers HTTP
+│   ├── controllers/         # Controllers HTTP
 │   └── routers/             # Configuração de rotas
 │       
 └── cmd/                     # Pontos de entrada do sistema
@@ -76,60 +71,7 @@ api/
 ## Instalação e Configuração
 
 ### Pré-requisitos
-
-- Go 1.23+
-- PostgreSQL
-- Docker e Docker Compose (opcional)
-
-### Instalação local
-
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/thalesmacedo1/freterapido-backend-api.git
-   cd freterapido-backend-api
-   ```
-
-2. Instale as dependências:
-   ```bash
-   go mod tidy
-   go get -u github.com/swaggo/swag/cmd/swag
-   go get -u github.com/swaggo/gin-swagger
-   go get -u github.com/swaggo/files
-   ```
-
-3. Configure o banco de dados:
-   - Certifique-se de que o PostgreSQL está em execução
-   - Crie um banco de dados para a aplicação
-   - Configure as variáveis de ambiente ou ajuste a string de conexão em `api/cmd/api/main.go`
-
-4. Configure as variáveis de ambiente:
-   - Crie um arquivo `.env` na raiz do projeto ou copie o exemplo fornecido:
-   ```
-   # Banco de dados
-   POSTGRES_HOST=localhost
-   POSTGRES_PORT=5432
-   POSTGRES_USER=postgres
-   POSTGRES_PASSWORD=postgres
-   POSTGRES_DB=freterapido
-   POSTGRES_SYNCHRONIZE=true
-
-   # Servidor
-   PORT=3000
-
-   # Frete Rápido API
-   FRETE_RAPIDO_API_URL=https://api.freterapido.com/cotacao/v3
-   CNPJ=25438296000158
-   FRETE_RAPIDO_TOKEN=1d52a9b6b78cf07b08586152459a5c90
-   PLATFORM_CODE=5AKVkHqCn
-   ZIPCODE=29161376
-   ```
-
-5. Execute a aplicação:
-   ```bash
-   go run api/cmd/api/main.go
-   ```
-
-### Instalação com Docker
+- Docker e Docker Compose
 
 1. Clone o repositório:
    ```bash
@@ -141,7 +83,15 @@ api/
    ```bash
    docker-compose up -d
    ```
-
+   ou com o comando
+   ```bash
+   make run
+   ```
+   A aplicação roda na seguinte URL e porta:
+   ```bash
+   http://localhost:3000/
+   ```
+      
 ## Rotas da API
 
 A API disponibiliza os seguintes endpoints:
@@ -246,23 +196,6 @@ A API utiliza o Swagger para documentação interativa dos endpoints. A document
 http://localhost:3000/swagger/index.html
 ```
 
-### Endpoints Documentados
-
-A documentação Swagger inclui detalhes completos dos seguintes endpoints:
-
-#### 1. POST /quote
-- **Descrição**: Retorna cotações de frete de diferentes transportadoras com base nos dados enviados
-- **Parâmetros**: Corpo da requisição com dados do destinatário e volumes
-- **Respostas**: 200 (sucesso), 400 (requisição inválida), 500 (erro interno)
-- **Modelo de entrada**: domain.QuoteRequest
-- **Modelo de saída**: domain.QuoteResponse
-
-#### 2. GET /metrics?last_quotes={?}
-- **Descrição**: Retorna métricas e estatísticas sobre as cotações de frete realizadas
-- **Parâmetros**: Query parameter `last_quotes` (opcional) para limitar número de cotações
-- **Respostas**: 200 (sucesso), 400 (parâmetro inválido), 500 (erro interno)
-- **Modelo de saída**: domain.MetricsResponse
-
 ### Gerando a documentação Swagger:
 
 Para atualizar a documentação após mudanças no código, execute:
@@ -270,50 +203,3 @@ Para atualizar a documentação após mudanças no código, execute:
 ```bash
 swag init -g api/cmd/api/main.go -o docs
 ```
-
-### Executando os testes
-
-#### Testes unitários
-```bash
-make test-unit
-```
-
-#### Testes de integração
-```bash
-make test-integration
-```
-
-#### Todos os testes
-```bash
-make test
-```
-
-
-## Docker e Docker Compose
-
-O projeto inclui arquivos para execução em ambiente Docker:
-
-- `Dockerfile`: Configuração para construir a imagem da aplicação
-- `docker-compose.yml`: Configuração para orquestrar os containers da aplicação e banco de dados
-
-### Comandos úteis
-
-- Iniciar aplicação e banco de dados:
-  ```bash
-  make docker-up
-  ```
-
-- Parar containers:
-  ```bash
-  make docker-down
-  ```
-
-- Construir aplicação:
-  ```bash
-  make build
-  ```
-
-- Executar aplicação localmente:
-  ```bash
-  make run
-  ```
