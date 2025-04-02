@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,20 +23,26 @@ func NewGetShippingQuotationUseCase(quoteRepository domain.QuoteRepository) *Get
 	}
 }
 
+// Função auxiliar para obter variáveis de ambiente com valor padrão
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Printf("WARNING: Environment variable %s not found, using default value: %s", key, defaultValue)
+		return defaultValue
+	}
+	return value
+}
+
 func (uc *GetShippingQuotationUseCase) Execute(ctx context.Context, request domain.QuoteRequest) (*domain.QuoteResponse, error) {
-	// Prepare request to Frete Rápido API
 	freteRapidoRequest := prepareFRRequest(request)
 
-	// Call Frete Rápido API
 	frResponse, err := callFreteRapidoAPI(freteRapidoRequest)
 	if err != nil {
 		return nil, fmt.Errorf("error calling Frete Rápido API: %w", err)
 	}
 
-	// Transform response
 	quoteResponse := transformResponse(frResponse)
 
-	// Save quote to database
 	err = uc.quoteRepository.SaveQuote(ctx, quoteResponse)
 	if err != nil {
 		return nil, fmt.Errorf("error saving quote: %w", err)
@@ -47,31 +54,32 @@ func (uc *GetShippingQuotationUseCase) Execute(ctx context.Context, request doma
 func prepareFRRequest(request domain.QuoteRequest) domain.FreteRapidoRequest {
 	frRequest := domain.FreteRapidoRequest{}
 
-	// Set shipper information using environment variables
-	frRequest.Shipper.RegisteredNumber = os.Getenv("SHIPPER_CNPJ")
-	frRequest.Shipper.Token = os.Getenv("FRETE_RAPIDO_TOKEN")
-	frRequest.Shipper.PlatformCode = os.Getenv("PLATFORM_CODE")
+	frRequest.Shipper.RegisteredNumber = getEnv("CNPJ", "25438296000158")
+	frRequest.Shipper.Token = getEnv("FRETE_RAPIDO_TOKEN", "1d52a9b6b78cf07b08586152459a5c90")
+	frRequest.Shipper.PlatformCode = getEnv("PLATFORM_CODE", "5AKVkHqCn")
 
-	// Set recipient information
-	frRequest.Recipient.Address.Zipcode = request.Recipient.Address.Zipcode
+	frRequest.Recipient.Type = 0
+	frRequest.Recipient.Country = "BRA"
 
-	// Create dispatcher
+	zipcodeInt, _ := strconv.Atoi(request.Recipient.Address.Zipcode)
+	frRequest.Recipient.Zipcode = zipcodeInt
+
+	zipcodeEnvInt, _ := strconv.Atoi(getEnv("ZIPCODE", "29161376"))
 	dispatcher := struct {
 		RegisteredNumber string                     `json:"registered_number"`
-		Zipcode          string                     `json:"zipcode"`
+		Zipcode          int                        `json:"zipcode"`
 		Volumes          []domain.FreteRapidoVolume `json:"volumes"`
 	}{
-		RegisteredNumber: os.Getenv("SHIPPER_CNPJ"),
-		Zipcode:          os.Getenv("DISPATCHER_ZIPCODE"),
+		RegisteredNumber: getEnv("CNPJ", "25438296000158"),
+		Zipcode:          zipcodeEnvInt,
 		Volumes:          []domain.FreteRapidoVolume{},
 	}
 
-	// Transform volumes
 	for _, vol := range request.Volumes {
 		frVolume := domain.FreteRapidoVolume{
 			Amount:        vol.Amount,
-			Category:      vol.Category,
-			SKU:           vol.SKU,
+			Category:      strconv.Itoa(vol.Category),
+			Sku:           vol.SKU,
 			Height:        vol.Height,
 			Width:         vol.Width,
 			Length:        vol.Length,
@@ -82,27 +90,33 @@ func prepareFRRequest(request domain.QuoteRequest) domain.FreteRapidoRequest {
 	}
 
 	frRequest.Dispatchers = append(frRequest.Dispatchers, dispatcher)
+	frRequest.SimulationType = []int{0}
+	frRequest.Returns.Composition = false
+	frRequest.Returns.Volumes = false
+	frRequest.Returns.AppliedRules = false
+
+	jsonData, _ := json.MarshalIndent(frRequest, "", "  ")
+	log.Printf("FreteRapido Request: %s", string(jsonData))
 
 	return frRequest
 }
 
 func callFreteRapidoAPI(request domain.FreteRapidoRequest) (*domain.FreteRapidoResponse, error) {
-	// Convert request to JSON
 	jsonData, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
 
-	// Create HTTP request using environment variable for API URL
-	req, err := http.NewRequest("POST", os.Getenv("FRETE_RAPIDO_API_URL"), bytes.NewBuffer(jsonData))
+	apiURL := getEnv("FRETE_RAPIDO_API_URL", "https://sp.freterapido.com/api/v3/quote/simulate")
+	log.Printf("Calling FreteRapido API at: %s", apiURL)
+
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}
 
-	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -110,12 +124,12 @@ func callFreteRapidoAPI(request domain.FreteRapidoRequest) (*domain.FreteRapidoR
 	}
 	defer resp.Body.Close()
 
-	// Check response status
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non-200 response status: %d", resp.StatusCode)
+		respBody := make([]byte, 1024)
+		n, _ := resp.Body.Read(respBody)
+		return nil, fmt.Errorf("received non-200 response status: %d, body: %s", resp.StatusCode, string(respBody[:n]))
 	}
 
-	// Parse response
 	var frResponse domain.FreteRapidoResponse
 	if err := json.NewDecoder(resp.Body).Decode(&frResponse); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
@@ -129,7 +143,6 @@ func transformResponse(frResponse *domain.FreteRapidoResponse) *domain.QuoteResp
 		Carriers: []domain.Carrier{},
 	}
 
-	// Extract carriers from response
 	for _, dispatcher := range frResponse.Dispatchers {
 		for _, offer := range dispatcher.Offers {
 			carrier := domain.Carrier{

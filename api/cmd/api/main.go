@@ -36,14 +36,12 @@ func main() {
 		log.Println("Warning: .env file not found, using environment variables")
 	}
 
-	// Obtém configurações do banco de dados
 	dbHost := getEnv("POSTGRES_HOST", "localhost")
 	dbPort := getEnv("POSTGRES_PORT", "5432")
 	dbUser := getEnv("POSTGRES_USER", "postgres")
 	dbPassword := getEnv("POSTGRES_PASSWORD", "postgres")
 	dbName := getEnv("POSTGRES_DB", "freterapido")
 
-	// Database connection
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		dbHost, dbUser, dbPassword, dbName, dbPort)
 
@@ -68,21 +66,17 @@ func main() {
 	getShippingQuotationUseCase := usecases.NewGetShippingQuotationUseCase(quoteRepository)
 	getMetricsUseCase := usecases.NewGetMetricsUseCase(metricsRepository)
 
-	// Setup router
 	router := routers.SetupRouter(getShippingQuotationUseCase, getMetricsUseCase)
 
-	// Get server port from environment or use default
-	port := getEnv("PORT", "8080")
+	port := getEnv("PORT", "3000")
 
 	log.Printf("Starting server on port %s", port)
 
-	// Start server
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
-// getEnv obtém uma variável de ambiente ou retorna um valor padrão
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {

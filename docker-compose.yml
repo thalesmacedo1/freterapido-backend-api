@@ -30,11 +30,13 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      - BASE_URL=${BASE_URL}
-      - CNPJ_SENDER=${CNPJ_SENDER}
-      - AUTH_TOKEN=${AUTH_TOKEN}
-      - PLATFORM_CODE=${PLATFORM_CODE}
-      - ZIP_CODE=${ZIP_CODE}
+      # FreteRapido API variables (with explicitly set values for clarity)
+      - FRETE_RAPIDO_API_URL=https://sp.freterapido.com/api/v3/quote/simulate
+      - CNPJ=25438296000158
+      - REGISTERED_NUMBER=25438296000158
+      - FRETE_RAPIDO_TOKEN=1d52a9b6b78cf07b08586152459a5c90
+      - PLATFORM_CODE=5AKVkHqCn
+      - ZIPCODE=29161376
     ports:
       - "3000:3000"
     depends_on:

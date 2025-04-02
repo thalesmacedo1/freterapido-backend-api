@@ -115,14 +115,13 @@ api/
 
    # Servidor
    PORT=3000
-   BASE_URL=
 
    # Frete Rápido API
    FRETE_RAPIDO_API_URL=https://api.freterapido.com/cotacao/v3
-   SHIPPER_CNPJ=25438296000158
+   CNPJ=25438296000158
    FRETE_RAPIDO_TOKEN=1d52a9b6b78cf07b08586152459a5c90
    PLATFORM_CODE=5AKVkHqCn
-   DISPATCHER_ZIPCODE=29161376
+   ZIPCODE=29161376
    ```
 
 5. Execute a aplicação:
