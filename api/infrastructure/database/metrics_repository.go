@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"sync"
 
 	domain "github.com/thalesmacedo1/freterapido-backend-api/api/domain/entities"
 	"gorm.io/gorm"
@@ -61,10 +62,15 @@ func (r *MetricsRepositoryImpl) GetMetrics(ctx context.Context, lastQuotes int) 
 		},
 	}
 
-	// Track metrics per carrier
+	// Track metrics per carrier with a mutex for thread safety
 	carrierMetrics := make(map[string]*domain.QuoteMetrics)
+	var metricsMutex sync.Mutex
+	var cheapestMutex sync.Mutex
 
-	// Process quotes and calculate metrics
+	// Use a wait group to wait for all goroutines to finish
+	var wg sync.WaitGroup
+
+	// Process quotes concurrently
 	for i, quote := range quotes {
 		// Skip quotes with no carriers
 		if len(quote.Carriers) == 0 {
@@ -72,32 +78,64 @@ func (r *MetricsRepositoryImpl) GetMetrics(ctx context.Context, lastQuotes int) 
 			continue
 		}
 
-		for j, carrier := range quote.Carriers {
-			fmt.Printf("Processing quote %d, carrier %d: %s with price %.2f\n",
-				i, j, carrier.Name, carrier.Price)
+		// Add to wait group
+		wg.Add(1)
 
-			// Update cheapest/most expensive
-			if carrier.Price < response.CheapestAndMostExpensive.CheapestShipping {
-				response.CheapestAndMostExpensive.CheapestShipping = carrier.Price
-			}
-			if carrier.Price > response.CheapestAndMostExpensive.MostExpensiveShipping {
-				response.CheapestAndMostExpensive.MostExpensiveShipping = carrier.Price
+		// Process each quote in a separate goroutine
+		go func(index int, q domain.QuoteResponse) {
+			defer wg.Done()
+
+			// Check for context cancellation
+			select {
+			case <-ctx.Done():
+				// Context was cancelled, stop processing
+				return
+			default:
+				// Continue processing
 			}
 
-			// Create or update carrier metrics
-			if _, exists := carrierMetrics[carrier.Name]; !exists {
-				carrierMetrics[carrier.Name] = &domain.QuoteMetrics{
-					CarrierName:          carrier.Name,
-					TotalQuotes:          0,
-					TotalShippingPrice:   0,
-					AverageShippingPrice: 0,
+			// Process all carriers in this quote
+			for j, carrier := range q.Carriers {
+				// Check for context cancellation periodically
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					// Continue processing
 				}
-			}
 
-			carrierMetrics[carrier.Name].TotalQuotes++
-			carrierMetrics[carrier.Name].TotalShippingPrice += carrier.Price
-		}
+				fmt.Printf("Processing quote %d, carrier %d: %s with price %.2f\n",
+					index, j, carrier.Name, carrier.Price)
+
+				// Update cheapest/most expensive with mutex protection
+				cheapestMutex.Lock()
+				if carrier.Price < response.CheapestAndMostExpensive.CheapestShipping {
+					response.CheapestAndMostExpensive.CheapestShipping = carrier.Price
+				}
+				if carrier.Price > response.CheapestAndMostExpensive.MostExpensiveShipping {
+					response.CheapestAndMostExpensive.MostExpensiveShipping = carrier.Price
+				}
+				cheapestMutex.Unlock()
+
+				// Update carrier metrics with mutex protection
+				metricsMutex.Lock()
+				if _, exists := carrierMetrics[carrier.Name]; !exists {
+					carrierMetrics[carrier.Name] = &domain.QuoteMetrics{
+						CarrierName:          carrier.Name,
+						TotalQuotes:          0,
+						TotalShippingPrice:   0,
+						AverageShippingPrice: 0,
+					}
+				}
+				carrierMetrics[carrier.Name].TotalQuotes++
+				carrierMetrics[carrier.Name].TotalShippingPrice += carrier.Price
+				metricsMutex.Unlock()
+			}
+		}(i, quote)
 	}
+
+	// Wait for all goroutines to complete
+	wg.Wait()
 
 	// Convert map to slice in a deterministic order (alphabetical by carrier name)
 	var carrierNames []string
@@ -106,14 +144,43 @@ func (r *MetricsRepositoryImpl) GetMetrics(ctx context.Context, lastQuotes int) 
 	}
 	sort.Strings(carrierNames)
 
-	// Build metrics in consistent order
+	// Use channels to collect metrics in parallel
+	metricsChan := make(chan domain.QuoteMetrics, len(carrierNames))
+	var avgWg sync.WaitGroup
+
+	// Calculate average prices in parallel
 	for _, name := range carrierNames {
-		metrics := carrierMetrics[name]
-		if metrics.TotalQuotes > 0 {
-			metrics.AverageShippingPrice = metrics.TotalShippingPrice / float64(metrics.TotalQuotes)
-		}
-		response.CarrierMetrics = append(response.CarrierMetrics, *metrics)
+		avgWg.Add(1)
+		go func(name string, metrics *domain.QuoteMetrics) {
+			defer avgWg.Done()
+
+			// Clone the metrics to avoid concurrent modification
+			metricsCopy := *metrics
+
+			if metricsCopy.TotalQuotes > 0 {
+				metricsCopy.AverageShippingPrice = metricsCopy.TotalShippingPrice / float64(metricsCopy.TotalQuotes)
+			}
+
+			// Send to channel
+			metricsChan <- metricsCopy
+		}(name, carrierMetrics[name])
 	}
+
+	// Close channel when all goroutines are done
+	go func() {
+		avgWg.Wait()
+		close(metricsChan)
+	}()
+
+	// Collect results from channel
+	for metric := range metricsChan {
+		response.CarrierMetrics = append(response.CarrierMetrics, metric)
+	}
+
+	// Sort the final metrics slice to maintain deterministic order
+	sort.Slice(response.CarrierMetrics, func(i, j int) bool {
+		return response.CarrierMetrics[i].CarrierName < response.CarrierMetrics[j].CarrierName
+	})
 
 	// Handle edge case when no valid carriers were found
 	if response.CheapestAndMostExpensive.CheapestShipping == math.MaxFloat64 {

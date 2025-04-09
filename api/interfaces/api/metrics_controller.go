@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/thalesmacedo1/freterapido-backend-api/api/application/usecases"
+	domain "github.com/thalesmacedo1/freterapido-backend-api/api/domain/entities"
 )
 
 type MetricsController struct {
@@ -64,10 +66,23 @@ func (c *MetricsController) GetMetrics(ctx *gin.Context) {
 
 	// Log detailed metrics for debugging
 	fmt.Printf("Returning metrics with %d carrier metrics\n", len(metrics.CarrierMetrics))
+
+	// Use a wait group for concurrent logging
+	var logWg sync.WaitGroup
+
+	// Log metrics concurrently
 	for i, metric := range metrics.CarrierMetrics {
-		fmt.Printf("  [%d] Carrier: %s, TotalQuotes: %d, TotalPrice: %.2f, AvgPrice: %.2f\n",
-			i, metric.CarrierName, metric.TotalQuotes, metric.TotalShippingPrice, metric.AverageShippingPrice)
+		logWg.Add(1)
+		go func(index int, m domain.QuoteMetrics) {
+			defer logWg.Done()
+			fmt.Printf("  [%d] Carrier: %s, TotalQuotes: %d, TotalPrice: %.2f, AvgPrice: %.2f\n",
+				index, m.CarrierName, m.TotalQuotes, m.TotalShippingPrice, m.AverageShippingPrice)
+		}(i, metric)
 	}
+
+	// Wait for all logging to complete
+	logWg.Wait()
+
 	fmt.Printf("Cheapest: %.2f, Most Expensive: %.2f\n",
 		metrics.CheapestAndMostExpensive.CheapestShipping,
 		metrics.CheapestAndMostExpensive.MostExpensiveShipping)

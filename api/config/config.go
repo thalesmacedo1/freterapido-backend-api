@@ -10,12 +10,10 @@ import (
 )
 
 type Config struct {
-	// Postgres Configuration
 	PostgresURI      string
 	PostgresUser     string
 	PostgresPassword string
 
-	// Redis Configuration
 	RedisHost     string
 	RedisPort     string
 	RedisPassword string
