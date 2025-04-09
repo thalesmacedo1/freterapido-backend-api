@@ -17,7 +17,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: proae_db
+          POSTGRES_DB: freterapido
         ports:
           - 5432:5432
         options: >-
