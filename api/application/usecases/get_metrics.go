@@ -17,6 +17,24 @@ func NewGetMetricsUseCase(metricsRepository domain.MetricsRepository) *GetMetric
 }
 
 func (uc *GetMetricsUseCase) Execute(ctx context.Context, lastQuotes int) (*domain.MetricsResponse, error) {
+	// Possivel uso de goroutines
 	// Get metrics from repository
+	// var wg sync.WaitGroup
+	// var metricsResult *domain.MetricsResponse
+	// var metricsErr error
+	//
+	// wg.Add(1)
+	// go func() {
+	//     defer wg.Done()
+	//     metricsResult, metricsErr = uc.metricsRepository.GetMetrics(ctx, lastQuotes)
+	// }()
+	//
+	// // Fetch other data concurrently here
+	//
+	// wg.Wait()
+	// if metricsErr != nil {
+	//     return nil, metricsErr
+	// }
+
 	return uc.metricsRepository.GetMetrics(ctx, lastQuotes)
 }
