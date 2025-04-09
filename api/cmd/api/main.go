@@ -36,11 +36,11 @@ func main() {
 		log.Println("Warning: .env file not found, using environment variables")
 	}
 
-	dbHost := getEnv("POSTGRES_HOST")
-	dbPort := getEnv("POSTGRES_PORT")
-	dbUser := getEnv("POSTGRES_USER")
-	dbPassword := getEnv("POSTGRES_PASSWORD")
-	dbName := getEnv("POSTGRES_DB")
+	dbHost := getEnv("POSTGRES_HOST", "localhost")
+	dbPort := getEnv("POSTGRES_PORT", "5432")
+	dbUser := getEnv("POSTGRES_USER", "postgres")
+	dbPassword := getEnv("POSTGRES_PASSWORD", "postgres")
+	dbName := getEnv("POSTGRES_DB", "freterapido")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		dbHost, dbUser, dbPassword, dbName, dbPort)
